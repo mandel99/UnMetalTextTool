@@ -29,9 +29,9 @@ jobs:
         run: |
           $package = Join-Path $env:GITHUB_WORKSPACE "package"
           New-Item -ItemType Directory -Force -Path $package | Out-Null
-          Copy-Item "bin\Release\UnMetalTextTool.exe" $package
-          if (Test-Path "bin\Release\UnMetalTextTool.exe.config") {
-            Copy-Item "bin\Release\UnMetalTextTool.exe.config" $package
+          Copy-Item "bin\Release\net48\UnMetalTextTool.exe" $package
+          if (Test-Path "bin\Release\net48\UnMetalTextTool.exe.config") {
+            Copy-Item "bin\Release\net48\UnMetalTextTool.exe.config" $package
           }
           Compress-Archive -Path "$package\*" -DestinationPath "UnMetalTextTool-v1.0.0.zip" -Force
 
