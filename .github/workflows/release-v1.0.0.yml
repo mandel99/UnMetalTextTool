@@ -1,0 +1,55 @@
+name: Build v1.0.0 Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/release-v1.0.0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore and build
+        shell: cmd
+        run: msbuild UnMetalTextTool.csproj /restore /p:Configuration=Release
+
+      - name: Package
+        shell: powershell
+        run: |
+          $package = Join-Path $env:GITHUB_WORKSPACE "package"
+          New-Item -ItemType Directory -Force -Path $package | Out-Null
+          Copy-Item "bin\Release\UnMetalTextTool.exe" $package
+          if (Test-Path "bin\Release\UnMetalTextTool.exe.config") {
+            Copy-Item "bin\Release\UnMetalTextTool.exe.config" $package
+          }
+          Compress-Archive -Path "$package\*" -DestinationPath "UnMetalTextTool-v1.0.0.zip" -Force
+
+      - name: Create GitHub Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.0.0 *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release v1.0.0 already exists."
+            exit 0
+          }
+
+          gh release create v1.0.0 `
+            "UnMetalTextTool-v1.0.0.zip" `
+            --target "$env:GITHUB_SHA" `
+            --title "UnMetal Text Tool v1.0.0" `
+            --notes "Initial release of UnMetal Text Tool. Converts UnMetal .bin dictionary files to editable .txt files and back, with drag-and-drop, file selection, and support for duplicate IDs across base/extra sections. Targets .NET Framework 4.8."
